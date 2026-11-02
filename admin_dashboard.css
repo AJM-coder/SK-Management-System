@@ -84,6 +84,7 @@ header p {
     border-radius: 10px;
     width: 230px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 2%;
 }
 
 .summary-card h3 {
@@ -187,6 +188,64 @@ button:hover {
     opacity: 0.8;
 }
 
+/* Dashboard Sections */
+.content-section {
+    width: 100%;
+}
+
+/* Add Officer Account Form */
+.add-account-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.add-account-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    font-size: 13px;
+    color: #0e3155;
+}
+
+.add-account-form input:focus {
+    border-color: #0e3155;
+}
+
+.add-account-form input::placeholder {
+    color: #999;
+}
+
+.add-account-form button {
+    background: #0e3155;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.add-account-form button:hover {
+    background: #174875;
+    opacity: 1;
+}
+
+/* Form Message */
+.message {
+    padding: 12px 15px;
+    margin: 15px 0;
+    background: #fff3d9;
+    color: #946200;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {
@@ -197,5 +256,9 @@ button:hover {
         margin-left: 180px;
         width: calc(100% - 180px);
         padding: 20px;
+    }
+
+    .add-account-form {
+        grid-template-columns: 1fr;
     }
 }

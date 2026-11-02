@@ -49,13 +49,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $_SESSION["user_id"] = $row["acc_id"];
             $_SESSION["username"] = $row["acc_username"];
+            $_SESSION["acc_admin"] = $row["acc_admin"];
+            $_SESSION["acc_id"] = $row["acc_id"];
 
             // Redirect to dashboard
             if($row['acc_admin']=='YES'){
                 header("Location: admin_dashboard.php");
                 exit();
             } else {
-                header("Location: dashboard.php");
+                header("Location: officer_dashboard.php");
                 exit();
             }
 
