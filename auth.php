@@ -51,8 +51,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION["username"] = $row["acc_username"];
 
             // Redirect to dashboard
-            header("Location: dashboard.php");
-            exit();
+            if($row['acc_admin']=='YES'){
+                header("Location: admin_dashboard.php");
+                exit();
+            } else {
+                header("Location: dashboard.php");
+                exit();
+            }
 
         } else {
 
