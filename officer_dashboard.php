@@ -25,7 +25,8 @@ $stmt = $conn->prepare("
         acc_firstname,
         acc_lastname,
         acc_email,
-        acc_position
+        acc_position,
+        acc_picture
     FROM acc_info
     WHERE acc_info_id = ?
 ");
@@ -40,7 +41,8 @@ if (!$profile) {
         "acc_firstname" => "",
         "acc_lastname" => "",
         "acc_email" => "",
-        "acc_position" => ""
+        "acc_position" => "",
+        "acc_picture" => null
     ];
 }
 ?>
@@ -67,8 +69,43 @@ if (!$profile) {
 
 <aside class="sidebar">
 
+    
+  <!-- OFFICER PHOTO -->
+<div class="officer-photo-container">
+
+<div class="officer-photo-frame">
+
+    <?php if (!empty($profile["acc_picture"])) { ?>
+
+        <img
+            src="officer_uploads/<?= htmlspecialchars($profile["acc_picture"]) ?>"
+            alt="Officer Photo"
+        >
+
+    <?php } else { ?>
+
+        <div class="officer-photo-placeholder">
+            <?= strtoupper(substr($profile["acc_firstname"], 0, 1)) ?>
+        </div>
+
+    <?php } ?>
+
+</div>
+
+<h3>
+    <?= htmlspecialchars(
+        $profile["acc_firstname"] . " " . $profile["acc_lastname"]
+    ) ?>
+</h3>
+
+<p>
+    <?= htmlspecialchars($profile["acc_position"]) ?>
+</p>
+
+</div>
+
     <div class="brand">
-        <h2>BARANGAY SAN ROQUE</h2>
+        <h2>BARANGAY SALAZA</h2>
         <p>SANGGUNIANG KABATAAN</p>
     </div>
 
@@ -92,6 +129,10 @@ if (!$profile) {
 
     <a class="menu-link" onclick="showSection('account', this)">
         Account Information
+    </a>
+
+    <a class="menu-link" href="public_announcements.php" target="_blank">
+        View Public Page
     </a>
 
     <?php if ($_SESSION["acc_admin"] === "YES") { ?>
@@ -272,6 +313,93 @@ if (!$profile) {
         </div>
 
     </section>
+
+<!-- POST MODAL -->
+
+<div class="modal-overlay" id="postModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Announcement</h2>
+
+            <button type="button"
+                class="modal-close"
+                onclick="closePostModal()">
+                &times;
+            </button>
+        </div>
+
+        <form id="postForm" enctype="multipart/form-data">
+
+            <input type="hidden" name="id" id="postId">
+            <input type="hidden" name="version" id="postVersion">
+            <input type="hidden" name="type" id="postType">
+
+            <label>Title</label>
+            <input type="text"
+                name="title"
+                id="postTitle"
+                required>
+
+            <label>Description</label>
+            <textarea name="description"
+                id="postDescription"
+                rows="5"
+                required></textarea>
+
+            <label>Event / Project Date</label>
+            <input type="date"
+                name="date"
+                id="postDate">
+
+            <label>Upload Image</label>
+            <input type="file"
+                name="image"
+                id="postImage"
+                accept="image/jpeg,image/png,image/webp">
+
+            <small class="image-hint">
+                Accepted formats: JPG, PNG, WEBP. Maximum size: 5 MB.
+            </small>
+
+            <div class="image-preview-container" id="imagePreviewContainer">
+
+                <img id="imagePreview" src="" alt="Image Preview">
+
+                <button type="button"
+                    class="btn-secondary"
+                    onclick="removeSelectedImage()">
+                    Remove Image
+                </button>
+
+            </div>
+
+            <input type="hidden" name="remove_image" id="removeImage" value="0">
+
+            <div class="modal-actions">
+
+                <button type="button"
+                    class="btn-secondary"
+                    onclick="closePostModal()">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                    class="btn-primary"
+                    id="savePostButton">
+                    Save Post
+                </button>
+
+            </div>
+
+            <p class="message" id="postMessage"></p>
+
+        </form>
+
+    </div>
+
+</div>
 
 </main>
 
@@ -469,46 +597,44 @@ function renderList(elementId, posts) {
 /* ---------------------------------
    CREATE POST
 ---------------------------------- */
+function createPost(type) {
 
-async function createPost(type) {
+document.getElementById("postForm").reset();
 
-    const title = prompt("Enter title:");
+document.getElementById("postId").value = "";
+document.getElementById("postVersion").value = "";
 
-    if (title === null || title.trim() === "") {
-        return;
-    }
+document.getElementById("postType").value = type;
 
-    const description = prompt("Enter description:");
+document.getElementById("modalTitle").textContent =
+    "Add " + formatPostType(type);
 
-    if (description === null || description.trim() === "") {
-        return;
-    }
+document.getElementById("postDate").disabled =
+    type === "ANNOUNCEMENT";
 
-    let date = "";
+document.getElementById("postMessage").textContent = "";
 
-    if (type === "EVENT" || type === "PROJECT") {
+document.getElementById("imagePreviewContainer").style.display =
+    "none";
 
-        date = prompt("Enter date (YYYY-MM-DD), or leave blank:");
+document.getElementById("postModal").classList.add("active");
+}
 
-        if (date === null) {
-            return;
-        }
 
-        date = date.trim();
-    }
+function formatPostType(type) {
 
-    const result = await apiRequest("create", {
-        type: type,
-        title: title,
-        description: description,
-        date: date
-    });
+if (type === "ANNOUNCEMENT") return "Announcement";
+if (type === "EVENT") return "Event";
+if (type === "PROJECT") return "Future Project";
 
-    alert(result.message);
+return type;
+}
 
-    if (result.success) {
-        loadDashboard();
-    }
+
+function closePostModal() {
+
+document.getElementById("postModal").classList.remove("active");
+
 }
 
 
@@ -516,45 +642,50 @@ async function createPost(type) {
    EDIT POST
 ---------------------------------- */
 
-async function editPost(post) {
+function editPost(post) {
 
-    const title = prompt("Edit title:", post.post_title);
+document.getElementById("postForm").reset();
 
-    if (title === null || title.trim() === "") {
-        return;
-    }
+document.getElementById("postId").value = post.post_id;
 
-    const description = prompt(
-        "Edit description:",
-        post.post_description
-    );
+document.getElementById("postVersion").value = post.version;
 
-    if (description === null || description.trim() === "") {
-        return;
-    }
+document.getElementById("postType").value = post.post_type;
 
-    const date = prompt(
-        "Edit date (YYYY-MM-DD), or leave blank:",
-        post.post_date || ""
-    );
+document.getElementById("postTitle").value = post.post_title;
 
-    if (date === null) {
-        return;
-    }
+document.getElementById("postDescription").value =
+    post.post_description;
 
-    const result = await apiRequest("update", {
-        id: Number(post.post_id),
-        version: Number(post.version),
-        title: title,
-        description: description,
-        date: date.trim()
-    });
+document.getElementById("postDate").value =
+    post.post_date || "";
 
-    alert(result.message);
+document.getElementById("postDate").disabled =
+    post.post_type === "ANNOUNCEMENT";
 
-    await loadDashboard();
+document.getElementById("modalTitle").textContent =
+    "Edit " + formatPostType(post.post_type);
+
+document.getElementById("postMessage").textContent = "";
+
+if (post.post_image) {
+
+    document.getElementById("imagePreview").src =
+        post.post_image;
+
+    document.getElementById("imagePreviewContainer").style.display =
+        "block";
+
+} else {
+
+    document.getElementById("imagePreviewContainer").style.display =
+        "none";
+
 }
 
+document.getElementById("postModal").classList.add("active");
+
+}
 
 /* ---------------------------------
    DELETE POST
@@ -577,6 +708,114 @@ async function deletePost(id) {
     }
 }
 
+const postImage = document.getElementById("postImage");
+
+postImage.addEventListener("change", function() {
+
+    const file = this.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+
+        alert("Please select a JPG, PNG, or WEBP image.");
+
+        this.value = "";
+
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+
+        alert("Image must not exceed 5 MB.");
+
+        this.value = "";
+
+        return;
+    }
+
+    const preview = document.getElementById("imagePreview");
+
+    preview.src = URL.createObjectURL(file);
+
+    document.getElementById("imagePreviewContainer").style.display =
+        "block";
+
+});
+
+
+function removeSelectedImage() {
+
+    document.getElementById("postImage").value = "";
+
+    document.getElementById("imagePreview").src = "";
+
+    document.getElementById("imagePreviewContainer").style.display =
+        "none";
+
+}
+
+document.getElementById("postForm").addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        const formData = new FormData(this);
+
+        const id = formData.get("id");
+
+        const action = id ? "update" : "create";
+
+        const response = await fetch(
+            "officer_dashboard.php?action=" + action,
+            {
+                method: "POST",
+
+                headers: {
+                    "X-CSRF-Token": csrfToken
+                },
+
+                body: formData
+            }
+        );
+
+        const result = await response.json();
+
+        document.getElementById("postMessage").textContent =
+            result.message;
+
+        if (result.success) {
+
+            closePostModal();
+
+            await loadDashboard();
+
+        }
+
+    }
+);
+
+function removeSelectedImage() {
+
+document.getElementById("postImage").value = "";
+
+document.getElementById("imagePreview").src = "";
+
+document.getElementById("imagePreviewContainer").style.display =
+    "none";
+
+document.getElementById("removeImage").value = "1";
+
+}
 
 /* ---------------------------------
    UPDATE ACCOUNT INFORMATION

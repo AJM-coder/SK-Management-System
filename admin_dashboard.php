@@ -13,6 +13,34 @@ $message = "";
 $activeSection = "account-management";
 
 // ==========================================
+// OFFICER PICTURE CONFIGURATION
+// ==========================================
+
+$uploadDir = __DIR__ . "/officer_uploads/";
+$uploadUrl = "officer_uploads/";
+
+// Create upload directory if it does not exist
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0755, true);
+}
+
+// Delete an existing officer picture safely
+function deleteOfficerPicture($filename, $uploadDir) {
+
+    if (empty($filename)) {
+        return;
+    }
+
+    // Only allow deletion of files inside officer_uploads
+    $filename = basename($filename);
+    $filePath = $uploadDir . $filename;
+
+    if (is_file($filePath)) {
+        unlink($filePath);
+    }
+}
+
+// ==========================================
 // ADD OFFICER ACCOUNT
 // ==========================================
 
@@ -35,6 +63,7 @@ if (isset($_POST["add_officer"])) {
         $username == "" ||
         $password == ""
     ) {
+
         $message = "Please complete all fields.";
 
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -47,7 +76,6 @@ if (isset($_POST["add_officer"])) {
 
     } else {
 
-        // Check existing username or email
         $check = $conn->prepare(
             "SELECT accounts.acc_id
              FROM accounts
@@ -72,7 +100,6 @@ if (isset($_POST["add_officer"])) {
 
                 $conn->begin_transaction();
 
-                // Generate next profile ID
                 $idResult = $conn->query(
                     "SELECT COALESCE(MAX(acc_info_id), 0) + 1 AS next_id
                      FROM acc_info"
@@ -81,13 +108,11 @@ if (isset($_POST["add_officer"])) {
                 $idRow = $idResult->fetch_assoc();
                 $info_id = (int)$idRow["next_id"];
 
-                // Hash password
                 $hashedPassword = password_hash(
                     $password,
                     PASSWORD_DEFAULT
                 );
 
-                // Insert officer account
                 $stmt = $conn->prepare(
                     "INSERT INTO accounts
                     (
@@ -111,7 +136,6 @@ if (isset($_POST["add_officer"])) {
 
                 $stmt->execute();
 
-                // Insert officer profile
                 $stmt2 = $conn->prepare(
                     "INSERT INTO acc_info
                     (
@@ -135,7 +159,6 @@ if (isset($_POST["add_officer"])) {
 
                 $stmt2->execute();
 
-                // Save both records
                 $conn->commit();
 
                 $message = "Officer account successfully created.";
@@ -154,6 +177,177 @@ if (isset($_POST["add_officer"])) {
 }
 
 // ==========================================
+// OFFICER PICTURE MANAGEMENT
+// ==========================================
+
+if (isset($_POST["picture_action"])) {
+
+    $activeSection = "account-management";
+
+    $acc_id = isset($_POST["acc_id"])
+        ? (int)$_POST["acc_id"]
+        : 0;
+
+    $pictureAction = $_POST["picture_action"];
+
+    // Confirm that the account belongs to an officer
+    $checkOfficer = $conn->prepare(
+        "SELECT accounts.acc_info_id, acc_info.acc_picture
+         FROM accounts
+         INNER JOIN acc_info
+         ON accounts.acc_info_id = acc_info.acc_info_id
+         WHERE accounts.acc_id = ?
+         AND accounts.acc_role = 'OFFICER'"
+    );
+
+    $checkOfficer->bind_param("i", $acc_id);
+    $checkOfficer->execute();
+
+    $officerResult = $checkOfficer->get_result();
+
+    if ($officerResult->num_rows === 0) {
+
+        $message = "Officer account not found.";
+
+    } else {
+
+        $officer = $officerResult->fetch_assoc();
+
+        $info_id = (int)$officer["acc_info_id"];
+        $oldPicture = $officer["acc_picture"];
+
+        // --------------------------------------
+        // REMOVE PICTURE
+        // --------------------------------------
+
+        if ($pictureAction === "remove") {
+
+            $stmt = $conn->prepare(
+                "UPDATE acc_info
+                 SET acc_picture = NULL
+                 WHERE acc_info_id = ?"
+            );
+
+            $stmt->bind_param("i", $info_id);
+
+            if ($stmt->execute()) {
+
+                deleteOfficerPicture($oldPicture, $uploadDir);
+
+                $message = "Officer picture successfully removed.";
+
+            } else {
+
+                $message = "Unable to remove officer picture.";
+
+            }
+
+            $stmt->close();
+
+        }
+
+        // --------------------------------------
+        // UPLOAD OR CHANGE PICTURE
+        // --------------------------------------
+
+        elseif ($pictureAction === "upload") {
+
+            if (
+                !isset($_FILES["officer_picture"]) ||
+                $_FILES["officer_picture"]["error"] !== UPLOAD_ERR_OK
+            ) {
+
+                $message = "Please select a valid picture to upload.";
+
+            } elseif ($_FILES["officer_picture"]["size"] > 3 * 1024 * 1024) {
+
+                $message = "Picture must not exceed 3 MB.";
+
+            } else {
+
+                $tmpFile = $_FILES["officer_picture"]["tmp_name"];
+
+                // Detect actual file MIME type
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($tmpFile);
+
+                $allowedTypes = [
+                    "image/jpeg" => "jpg",
+                    "image/png"  => "png",
+                    "image/webp" => "webp"
+                ];
+
+                if (!isset($allowedTypes[$mimeType])) {
+
+                    $message = "Only JPG, PNG, and WEBP images are allowed.";
+
+                } elseif (getimagesize($tmpFile) === false) {
+
+                    $message = "The uploaded file is not a valid image.";
+
+                } else {
+
+                    // Generate a unique filename
+                    $extension = $allowedTypes[$mimeType];
+
+                    $newFilename = "officer_" .
+                        $acc_id . "_" .
+                        bin2hex(random_bytes(8)) .
+                        "." . $extension;
+
+                    $destination = $uploadDir . $newFilename;
+
+                    if (move_uploaded_file($tmpFile, $destination)) {
+
+                        $stmt = $conn->prepare(
+                            "UPDATE acc_info
+                             SET acc_picture = ?
+                             WHERE acc_info_id = ?"
+                        );
+
+                        $stmt->bind_param(
+                            "si",
+                            $newFilename,
+                            $info_id
+                        );
+
+                        if ($stmt->execute()) {
+
+                            // Delete old image only after successful update
+                            deleteOfficerPicture($oldPicture, $uploadDir);
+
+                            $message = "Officer picture successfully uploaded.";
+
+                        } else {
+
+                            // Remove new file if database update fails
+                            deleteOfficerPicture($newFilename, $uploadDir);
+
+                            $message = "Unable to save the officer picture.";
+
+                        }
+
+                        $stmt->close();
+
+                    } else {
+
+                        $message = "Unable to upload picture. Check folder permissions.";
+
+                    }
+                }
+            }
+
+        } else {
+
+            $message = "Invalid picture action.";
+
+        }
+    }
+
+    $checkOfficer->close();
+}
+
+// ==========================================
 // EXISTING ACCOUNT ACTIONS
 // ==========================================
 
@@ -161,6 +355,8 @@ if (isset($_POST["action"])) {
 
     $id = intval($_POST["acc_id"]);
     $action = $_POST["action"];
+
+    $sql = null;
 
     if ($action == "activate") {
 
@@ -189,7 +385,7 @@ if (isset($_POST["action"])) {
 
     }
 
-    if (isset($sql)) {
+    if ($sql !== null) {
 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id);
@@ -212,7 +408,6 @@ $sql = "SELECT accounts.*, acc_info.*
 
 $result = $conn->query($sql);
 
-// Total officer accounts
 $total = $result->num_rows;
 
 ?>
@@ -233,9 +428,7 @@ $total = $result->num_rows;
 
 <body>
 
-<!-- ===================================== -->
 <!-- SIDEBAR -->
-<!-- ===================================== -->
 
 <div class="sidebar">
 
@@ -269,9 +462,7 @@ $total = $result->num_rows;
 </div>
 
 
-<!-- ===================================== -->
 <!-- MAIN CONTENT -->
-<!-- ===================================== -->
 
 <div class="main-content">
 
@@ -284,15 +475,12 @@ $total = $result->num_rows;
     </header>
 
 
-    <!-- ===================================== -->
-    <!-- ACCOUNT MANAGEMENT SECTION -->
-    <!-- ===================================== -->
+    <!-- ACCOUNT MANAGEMENT -->
 
     <div id="account-management"
          class="content-section"
          style="<?php echo $activeSection == 'account-management' ? '' : 'display:none;'; ?>">
 
-        <!-- Summary -->
         <div class="summary-card">
 
             <h3>Total Officer Accounts</h3>
@@ -302,7 +490,15 @@ $total = $result->num_rows;
         </div>
 
 
-        <!-- Officer Accounts Table -->
+        <?php if ($message != "") { ?>
+
+            <p class="message">
+                <?php echo htmlspecialchars($message); ?>
+            </p>
+
+        <?php } ?>
+
+
         <div class="table-container">
 
             <h2>SK Officer Accounts</h2>
@@ -313,6 +509,7 @@ $total = $result->num_rows;
 
                     <tr>
                         <th>Officer Profile</th>
+                        <th>Officer Picture</th>
                         <th>Username</th>
                         <th>Created</th>
                         <th>Status</th>
@@ -331,7 +528,8 @@ $total = $result->num_rows;
 
                     <tr>
 
-                        <!-- Officer Profile -->
+                        <!-- OFFICER PROFILE -->
+
                         <td>
 
                             <strong>
@@ -354,26 +552,122 @@ $total = $result->num_rows;
                         </td>
 
 
-                        <!-- Username -->
+                        <!-- OFFICER PICTURE -->
+
+                        <td>
+
+                            <div class="officer-picture-wrapper">
+
+                                <?php if (!empty($row["acc_picture"])) { ?>
+
+                                    <img
+                                        src="<?php
+                                            echo htmlspecialchars(
+                                                $uploadUrl . basename($row["acc_picture"])
+                                            );
+                                        ?>"
+                                        alt="Officer Picture"
+                                        class="officer-picture"
+                                    >
+
+                                <?php } else { ?>
+
+                                    <div class="officer-picture-placeholder">
+                                        <?php
+                                        echo strtoupper(
+                                            substr($row["acc_firstname"], 0, 1)
+                                        );
+                                        ?>
+                                    </div>
+
+                                <?php } ?>
+
+                            </div>
+
+
+                            <!-- UPLOAD / CHANGE PICTURE -->
+
+                            <form method="POST"
+                                  enctype="multipart/form-data"
+                                  class="picture-form">
+
+                                <input
+                                    type="hidden"
+                                    name="acc_id"
+                                    value="<?php echo (int)$row["acc_id"]; ?>"
+                                >
+
+                                <input
+                                    type="file"
+                                    name="officer_picture"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    required
+                                    class="picture-input"
+                                >
+
+                                <button
+                                    type="submit"
+                                    name="picture_action"
+                                    value="upload"
+                                    class="btn-picture"
+                                >
+                                    <?php echo !empty($row["acc_picture"]) ? "Change" : "Add Picture"; ?>
+                                </button>
+
+                            </form>
+
+
+                            <!-- REMOVE PICTURE -->
+
+                            <?php if (!empty($row["acc_picture"])) { ?>
+
+                                <form method="POST"
+                                      onsubmit="return confirm('Remove this officer picture?');">
+
+                                    <input
+                                        type="hidden"
+                                        name="acc_id"
+                                        value="<?php echo (int)$row["acc_id"]; ?>"
+                                    >
+
+                                    <button
+                                        type="submit"
+                                        name="picture_action"
+                                        value="remove"
+                                        class="btn-remove-picture"
+                                    >
+                                        Remove Picture
+                                    </button>
+
+                                </form>
+
+                            <?php } ?>
+
+                        </td>
+
+
+                        <!-- USERNAME -->
+
                         <td>
                             <?php echo htmlspecialchars($row["acc_username"]); ?>
                         </td>
 
 
-                        <!-- Created -->
+                        <!-- CREATED -->
+
                         <td>
 
                             <?php
-                            echo date(
-                                "M d, Y",
-                                strtotime($row["acc_created"])
-                            );
+                            echo !empty($row["acc_created"])
+                                ? date("M d, Y", strtotime($row["acc_created"]))
+                                : "N/A";
                             ?>
 
                         </td>
 
 
-                        <!-- Status -->
+                        <!-- STATUS -->
+
                         <td>
 
                             <span class="status <?php echo strtolower($row["acc_status"]); ?>">
@@ -385,13 +679,15 @@ $total = $result->num_rows;
                         </td>
 
 
-                        <!-- Attempts -->
+                        <!-- ATTEMPTS -->
+
                         <td>
                             <?php echo (int)$row["acc_attempts"]; ?> / 3
                         </td>
 
 
-                        <!-- Last Login -->
+                        <!-- LAST LOGIN -->
+
                         <td>
 
                             <?php
@@ -418,48 +714,49 @@ $total = $result->num_rows;
                         </td>
 
 
-                        <!-- Actions -->
+                        <!-- ACCOUNT ACTIONS -->
+
                         <td>
 
                             <form method="POST" class="actions">
 
-                                <input type="hidden"
-                                       name="acc_id"
-                                       value="<?php echo (int)$row["acc_id"]; ?>">
-
+                                <input
+                                    type="hidden"
+                                    name="acc_id"
+                                    value="<?php echo (int)$row["acc_id"]; ?>"
+                                >
 
                                 <?php if ($row["acc_status"] == "ACTIVE") { ?>
 
-                                    <button type="submit"
-                                            name="action"
-                                            value="deactivate"
-                                            class="btn-danger">
-
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="deactivate"
+                                        class="btn-danger"
+                                    >
                                         Deactivate
-
                                     </button>
 
                                 <?php } else { ?>
 
-                                    <button type="submit"
-                                            name="action"
-                                            value="activate"
-                                            class="btn-success">
-
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="activate"
+                                        class="btn-success"
+                                    >
                                         Activate
-
                                     </button>
 
                                 <?php } ?>
 
-
-                                <button type="submit"
-                                        name="action"
-                                        value="reset"
-                                        class="btn-warning">
-
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="reset"
+                                    class="btn-warning"
+                                >
                                     Reset Attempts
-
                                 </button>
 
                             </form>
@@ -474,7 +771,7 @@ $total = $result->num_rows;
 
                     <tr>
 
-                        <td colspan="7" class="empty">
+                        <td colspan="8" class="empty">
                             No SK Officer accounts found.
                         </td>
 
@@ -491,9 +788,7 @@ $total = $result->num_rows;
     </div>
 
 
-    <!-- ===================================== -->
-    <!-- ADD OFFICER ACCOUNT SECTION -->
-    <!-- ===================================== -->
+    <!-- ADD OFFICER ACCOUNT -->
 
     <div id="add-account"
          class="content-section"
@@ -506,62 +801,62 @@ $total = $result->num_rows;
             <p>Create a new account for an SK Officer.</p>
 
 
-            <!-- Message -->
             <?php if ($message != "") { ?>
 
                 <p class="message">
-
                     <?php echo htmlspecialchars($message); ?>
-
                 </p>
 
             <?php } ?>
 
 
-            <!-- Add Account Form -->
             <form method="POST" class="add-account-form">
 
-                <input type="text"
-                       name="firstname"
-                       placeholder="First Name"
-                       required>
+                <input
+                    type="text"
+                    name="firstname"
+                    placeholder="First Name"
+                    required
+                >
 
+                <input
+                    type="text"
+                    name="lastname"
+                    placeholder="Last Name"
+                    required
+                >
 
-                <input type="text"
-                       name="lastname"
-                       placeholder="Last Name"
-                       required>
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    required
+                >
 
+                <input
+                    type="text"
+                    name="position"
+                    placeholder="Officer Position"
+                    required
+                >
 
-                <input type="email"
-                       name="email"
-                       placeholder="Email Address"
-                       required>
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="Username"
+                    maxlength="15"
+                    required
+                >
 
-
-                <input type="text"
-                       name="position"
-                       placeholder="Officer Position"
-                       required>
-
-
-                <input type="text"
-                       name="username"
-                       placeholder="Username"
-                       maxlength="15"
-                       required>
-
-
-                <input type="text"
-                       name="password"
-                       placeholder="Password"
-                       required>
-
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    required
+                >
 
                 <button type="submit" name="add_officer">
-
                     Add Officer Account
-
                 </button>
 
             </form>
@@ -573,32 +868,26 @@ $total = $result->num_rows;
 </div>
 
 
-<!-- ===================================== -->
-<!-- JAVASCRIPT MENU NAVIGATION -->
-<!-- ===================================== -->
+<!-- JAVASCRIPT -->
 
 <script>
 
 function showSection(sectionId, element) {
 
-    // Hide all sections
     const sections = document.querySelectorAll(".content-section");
 
     sections.forEach(section => {
         section.style.display = "none";
     });
 
-    // Show selected section
     document.getElementById(sectionId).style.display = "block";
 
-    // Remove active class from menu links
     const links = document.querySelectorAll(".menu-link");
 
     links.forEach(link => {
         link.classList.remove("active");
     });
 
-    // Set selected menu as active
     element.classList.add("active");
 
 }

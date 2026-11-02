@@ -4,38 +4,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>SK Barangay Salaza | Login</title>
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
 
     <div class="login-container">
 
-        <h1>Login</h1>
+        <div class="login-header">
 
-        <form action="auth.php" method="POST">
+            <!-- LOGO -->
+            <div class="logo-container">
+                <img src="images/SK_LOGO.png" alt="SK Barangay Salaza Logo">
+            </div>
 
-            <label for="username">Username</label>
-            <input 
-                type="text" 
-                id="username" 
-                name="username" 
-                placeholder="Enter your username"
-                required
-            >
+            <h2>SK BARANGAY SALAZA</h2>
+            <p class="subtitle">Management System</p>
 
-            <label for="password">Password</label>
-            <input 
-                type="password" 
-                id="password" 
-                name="password" 
-                placeholder="Enter your password"
-                required
-            >
+        </div>
 
-            <button type="submit">Login</button>
+        <div class="login-content">
 
-        </form>
+            <h1>Welcome Back</h1>
+            <p class="login-description">Sign in to your account to continue.</p>
+
+            <form action="auth.php" method="POST">
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Enter your username"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+
+                <button type="submit">Sign In</button>
+
+            </form>
+
+            <p class="footer-text">
+                Sangguniang Kabataan | Barangay Salaza
+            </p>
+
+        </div>
 
     </div>
 

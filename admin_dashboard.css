@@ -262,3 +262,80 @@ button:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* OFFICER PICTURE */
+
+/* OFFICER PICTURE - 1cm x 1cm */
+
+.officer-picture-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.officer-picture,
+.officer-picture-placeholder {
+    width: 1cm;
+    height: 1cm;
+    min-width: 1cm;
+    min-height: 1cm;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.officer-picture {
+    border: 2px solid #e5eaf0;
+}
+
+.officer-picture-placeholder {
+    background: #0e3155;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+
+.picture-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.picture-input {
+    width: 150px;
+    font-size: 11px;
+}
+
+.btn-picture,
+.btn-remove-picture {
+    width: 130px;
+    padding: 7px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.btn-picture {
+    background: #0e3155;
+    color: white;
+}
+
+.btn-picture:hover {
+    background: #194b79;
+}
+
+.btn-remove-picture {
+    background: #dc3545;
+    color: white;
+    margin-top: 5px;
+}
+
+.btn-remove-picture:hover {
+    background: #b02a37;
+}

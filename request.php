@@ -76,6 +76,52 @@ if (isset($_GET["action"])) {
         respond(true, "Dashboard updated.", $posts);
     }
 
+    function uploadPostImage($file) {
+
+        if (!isset($file) || $file["error"] === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+    
+        if ($file["error"] !== UPLOAD_ERR_OK) {
+            respond(false, "Image upload failed.");
+        }
+    
+        if ($file["size"] > 5 * 1024 * 1024) {
+            respond(false, "Image must not exceed 5 MB.");
+        }
+    
+        $allowed_types = [
+            "image/jpeg" => "jpg",
+            "image/png" => "png",
+            "image/webp" => "webp"
+        ];
+    
+        $mime = mime_content_type($file["tmp_name"]);
+    
+        if (!isset($allowed_types[$mime])) {
+            respond(false, "Invalid image format.");
+        }
+    
+        $extension = $allowed_types[$mime];
+    
+        $upload_directory = __DIR__ . "/uploads/posts/";
+    
+        if (!is_dir($upload_directory)) {
+            mkdir($upload_directory, 0755, true);
+        }
+    
+        $filename = bin2hex(random_bytes(16)) . "." . $extension;
+    
+        $destination = $upload_directory . $filename;
+    
+        if (!move_uploaded_file($file["tmp_name"], $destination)) {
+            respond(false, "Unable to save uploaded image.");
+        }
+    
+        return "uploads/posts/" . $filename;
+    
+    }
+
 
     /* ALL OTHER ACTIONS REQUIRE POST */
 
@@ -83,11 +129,23 @@ if (isset($_GET["action"])) {
         respond(false, "Invalid request method.");
     }
 
+    $is_upload_request =
+    isset($_SERVER["CONTENT_TYPE"]) &&
+    stripos($_SERVER["CONTENT_TYPE"], "multipart/form-data") === 0;
+
+if ($is_upload_request) {
+
+    $input = $_POST;
+
+} else {
+
     $input = json_decode(file_get_contents("php://input"), true);
 
-    if (!is_array($input)) {
-        respond(false, "Invalid request data.");
-    }
+}
+
+if (!is_array($input)) {
+    respond(false, "Invalid request data.");
+}
 
     /* CSRF CHECK */
 
@@ -106,43 +164,68 @@ if (isset($_GET["action"])) {
         $title = trim($input["title"] ?? "");
         $description = trim($input["description"] ?? "");
         $date = trim($input["date"] ?? "");
-
-        $allowed_types = ["ANNOUNCEMENT", "EVENT", "PROJECT"];
-
+    
+        $allowed_types = [
+            "ANNOUNCEMENT",
+            "EVENT",
+            "PROJECT"
+        ];
+    
         if (!in_array($type, $allowed_types, true)) {
             respond(false, "Invalid post category.");
         }
-
+    
         if ($title === "" || $description === "") {
-            respond(false, "Please complete the title and description.");
+            respond(false, "Please complete the required fields.");
         }
-
-        if ($date !== "" && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    
+        if ($date !== "" &&
+            (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ||
+            !checkdate(
+                (int)substr($date, 5, 2),
+                (int)substr($date, 8, 2),
+                (int)substr($date, 0, 4)
+            ))) {
             respond(false, "Invalid date.");
         }
-
+    
         $date_value = $date === "" ? null : $date;
-
+    
+        $image = uploadPostImage($_FILES["image"] ?? null);
+    
         $stmt = $conn->prepare("
             INSERT INTO dashboard_posts
-            (post_type, post_title, post_description, post_date, created_by, updated_by)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (
+                post_type,
+                post_title,
+                post_description,
+                post_date,
+                post_image,
+                created_by,
+                updated_by
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-
+    
         $stmt->bind_param(
-            "ssssii",
+            "sssssii",
             $type,
             $title,
             $description,
             $date_value,
+            $image,
             $acc_id,
             $acc_id
         );
-
+    
         if ($stmt->execute()) {
             respond(true, "Successfully added.");
         }
-
+    
+        if ($image !== null) {
+            @unlink(__DIR__ . "/" . $image);
+        }
+    
         respond(false, "Unable to add the item.");
     }
 
@@ -151,54 +234,102 @@ if (isset($_GET["action"])) {
 
     if ($action === "update") {
 
-        $id = (int) ($input["id"] ?? 0);
-        $version = (int) ($input["version"] ?? 0);
+        $id = (int)($input["id"] ?? 0);
+        $version = (int)($input["version"] ?? 0);
+    
         $title = trim($input["title"] ?? "");
         $description = trim($input["description"] ?? "");
         $date = trim($input["date"] ?? "");
-
-        if ($id <= 0 || $version <= 0 || $title === "" || $description === "") {
+    
+        if ($id <= 0 || $version <= 0 ||
+            $title === "" || $description === "") {
+    
             respond(false, "Please provide valid information.");
         }
-
-        if ($date !== "" && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    
+        if ($date !== "" &&
+            (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ||
+            !checkdate(
+                (int)substr($date, 5, 2),
+                (int)substr($date, 8, 2),
+                (int)substr($date, 0, 4)
+            ))) {
+    
             respond(false, "Invalid date.");
         }
-
+    
         $date_value = $date === "" ? null : $date;
-
+    
+        $check = $conn->prepare("
+            SELECT post_image
+            FROM dashboard_posts
+            WHERE post_id = ? AND version = ?
+        ");
+    
+        $check->bind_param("ii", $id, $version);
+        $check->execute();
+    
+        $existing = $check->get_result()->fetch_assoc();
+    
+        if (!$existing) {
+            respond(false, "This item was changed by another officer. Please reload.");
+        }
+    
+        $old_image = $existing["post_image"];
+    
+        $new_image = uploadPostImage($_FILES["image"] ?? null);
+    
+        $remove_image = ($_POST["remove_image"] ?? "") === "1";
+    
+        $final_image = $new_image !== null
+            ? $new_image
+            : ($remove_image ? null : $old_image);
+    
         $stmt = $conn->prepare("
             UPDATE dashboard_posts
             SET
                 post_title = ?,
                 post_description = ?,
                 post_date = ?,
+                post_image = ?,
                 updated_by = ?,
                 version = version + 1
             WHERE post_id = ?
               AND version = ?
         ");
-
+    
         $stmt->bind_param(
-            "sssiii",
+            "ssssiii",
             $title,
             $description,
             $date_value,
+            $final_image,
             $acc_id,
             $id,
             $version
         );
-
-        $stmt->execute();
-
-        if ($stmt->affected_rows === 1) {
+    
+        if ($stmt->execute() && $stmt->affected_rows === 1) {
+    
+            if ($old_image &&
+                ($new_image !== null || $remove_image)) {
+    
+                $old_path = __DIR__ . "/" . $old_image;
+    
+                if (is_file($old_path)) {
+                    @unlink($old_path);
+                }
+    
+            }
+    
             respond(true, "Changes saved successfully.");
         }
-
-        respond(
-            false,
-            "This item was changed by another officer. The latest version will be loaded. Please review your changes and try again."
-        );
+    
+        if ($new_image !== null) {
+            @unlink(__DIR__ . "/" . $new_image);
+        }
+    
+        respond(false, "Unable to update the item.");
     }
 
 

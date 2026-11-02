@@ -11,18 +11,11 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar">
+    <header class="navbar">
         <div class="logo">
-            <h2>BARANGAY SALAZA</h2>
-            <span>SANGGUNIANG KABATAAN</span>
+            <h2>SANGGUNIANG KABATAAN</h2>
         </div>
-
-        <div class="nav-links">
-            <a href="index.php" class="active">Home</a>
-            <a href="public/announcements.php">Announcements</a>
-            <a href="public/events.php">Events</a>
-        </div>
-    </nav>
+    </header>
 
     <!-- Main Content -->
     <main class="hero">
@@ -32,8 +25,7 @@
             <span class="welcome">WELCOME TO</span>
 
             <h1>
-                SK MANAGEMENT<br>
-                <span>SYSTEM</span>
+                BARANGAY SALAZA
             </h1>
 
             <p>
@@ -60,7 +52,7 @@
                     </span>
                 </a>
 
-                <a href="public/index.php" class="option-card public">
+                <a href="public_announcements.php" class="option-card public">
                     <!-- <div class="option-icon"></div> -->
 
                     <h3>PUBLIC VIEWING</h3>

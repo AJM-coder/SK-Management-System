@@ -19,86 +19,62 @@ body {
 /* Navigation */
 .navbar {
     width: 100%;
-    min-height: 85px;
-    padding: 15px 8%;
+    padding: 15px 5%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    background: white;
+    background: #0e3155;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .logo h2 {
     font-size: 19px;
     font-weight: 800;
+    color: #e8a62b;
     letter-spacing: 0.5px;
 }
 
-.logo span {
-    font-size: 11px;
-    font-weight: 600;
-    color: #e8a62b;
-    letter-spacing: 2px;
-}
-
-.nav-links {
-    display: flex;
-    gap: 30px;
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: #555;
-    font-size: 14px;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-    color: #e8a62b;
-}
-
-/* Hero */
 .hero {
-    flex: 1;
+    min-height: calc(100vh - 120px);
+    background-image:
+        linear-gradient(rgba(14, 49, 85, 0.65), rgba(14, 49, 85, 0.75)),
+        url("images/SK_Barangay\ Salaza.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
     display: flex;
-    align-items: center;
     justify-content: center;
-    padding: 70px 20px;
+    align-items: center;
+    padding: 60px 20px;
+    color: white;
     text-align: center;
 }
 
 .hero-content {
-    max-width: 850px;
+    max-width: 900px;
     width: 100%;
 }
 
 .welcome {
-    color: #e8a62b;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 600;
     letter-spacing: 4px;
 }
 
 .hero h1 {
-    font-size: clamp(36px, 6vw, 58px);
-    line-height: 1.15;
-    margin: 15px 0;
-    font-weight: 800;
-    color: #0e3155;
-}
-
-.hero h1 span {
     color: #e8a62b;
+    font-size: 48px;
+    font-weight: 800;
+    margin: 15px 0;
 }
 
 .hero-content > p {
-    max-width: 600px;
-    margin: 0 auto 40px;
-    color: #6b7280;
-    line-height: 1.8;
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 650px;
+    margin: 0 auto 35px;
 }
 
 /* Options */
@@ -164,7 +140,7 @@ footer {
     padding: 20px;
     background: white;
     text-align: center;
-    border-top: 1px solid #eee;
+    border-top: 2px solid #eee;
 }
 
 footer p {
@@ -181,10 +157,6 @@ footer p {
         padding: 20px;
     }
 
-    .nav-links {
-        gap: 15px;
-    }
-
     .options {
         grid-template-columns: 1fr;
         max-width: 380px;
@@ -192,6 +164,18 @@ footer p {
 
     .hero {
         padding: 50px 20px;
+    }
+
+    .welcome{
+        font-size: 15px;
+    }
+
+    .hero h1 {
+        font-size: 22px;
+    }
+
+    .hero-content > p {
+        font-size: 12px;
     }
 }
 
