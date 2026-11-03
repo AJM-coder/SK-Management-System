@@ -330,7 +330,24 @@ include "src/assets/controls/acc_query.php";
                                     >
                                         Reset Attempts
                                     </button>
+                                    
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="make_admin"
+                                        class="btn-admin"
+                                        onclick="return confirm('Are you sure you want to promote this officer to administrator?');">
+                                        Make Admin
+                                    </button>
 
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="delete"
+                                        class="btn-delete"
+                                        onclick="return confirm('Are you sure you want to permanently delete this officer account? This action cannot be undone.');">
+                                        Delete Account
+                                    </button>
                                 </form>
 
                             </td>
