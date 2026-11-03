@@ -1,5 +1,7 @@
 
 <?php
+
+// This was changed in the hosting web application (InfinityFree)
 $host = "localhost";
 $user = "root";
 $pass = "";
