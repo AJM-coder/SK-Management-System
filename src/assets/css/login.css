@@ -12,7 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     padding: 30px 20px;
-    background-image: url("images/SK_Barangay Salaza.jpg");
+    background-image: url("../images/bg/SK_Barangay Salaza.jpg");
     backdrop-filter: blur(2px);
     background-size: cover;
     background-position: center;
@@ -27,7 +27,7 @@ body {
     background: #ffffff;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 15px 45px rgba(14, 49, 85, 0.15);
+    box-shadow: 0 3px 15px rgb(0, 0, 0);
 }
 
 /* HEADER */

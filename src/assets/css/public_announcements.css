@@ -52,7 +52,7 @@ body {
 /* HERO */
 
 .hero {
-    background-image: url("images/SK_Barangay Salaza.jpg");
+    background-image: url("../images/bg/SK_Barangay\ Salaza.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -144,7 +144,7 @@ body {
     background: white;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.682);
     border: 1px solid #e9edf2;
     transition: transform 0.2s, box-shadow 0.2s;
 }

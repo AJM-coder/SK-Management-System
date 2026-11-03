@@ -1,5 +1,5 @@
 <?php
-include "fetch_post.php"
+include "src/assets/controls/fetch_post.php"
 ?>
 
 <!DOCTYPE html>
@@ -9,13 +9,13 @@ include "fetch_post.php"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>SK Announcements | Barangay San Roque</title>
+    <title>SK Announcements | Barangay Salaza</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="public_announcements.css">
+    <link rel="stylesheet" href="src/assets/css/public_announcements.css">
 </head>
 
 <body>

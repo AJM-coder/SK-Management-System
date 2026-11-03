@@ -104,7 +104,7 @@ if (isset($_GET["action"])) {
     
         $extension = $allowed_types[$mime];
     
-        $upload_directory = __DIR__ . "/uploads/posts/";
+        $upload_directory = __DIR__ . "/../images/posts/";
     
         if (!is_dir($upload_directory)) {
             mkdir($upload_directory, 0755, true);
@@ -118,7 +118,7 @@ if (isset($_GET["action"])) {
             respond(false, "Unable to save uploaded image.");
         }
     
-        return "uploads/posts/" . $filename;
+        return "src/assets/images/posts/" . $filename;
     
     }
 
@@ -223,7 +223,7 @@ if (!is_array($input)) {
         }
     
         if ($image !== null) {
-            @unlink(__DIR__ . "/" . $image);
+            @unlink(__DIR__ . "../images/posts/" . basename($image));
         }
     
         respond(false, "Unable to add the item.");
@@ -314,7 +314,7 @@ if (!is_array($input)) {
             if ($old_image &&
                 ($new_image !== null || $remove_image)) {
     
-                $old_path = __DIR__ . "/" . $old_image;
+                $old_path = __DIR__ . "/../images/posts/" . basename($old_image);
     
                 if (is_file($old_path)) {
                     @unlink($old_path);
@@ -326,7 +326,7 @@ if (!is_array($input)) {
         }
     
         if ($new_image !== null) {
-            @unlink(__DIR__ . "/" . $new_image);
+            @unlink(__DIR__ . "/../images/posts/" . basename($new_image));
         }
     
         respond(false, "Unable to update the item.");
@@ -335,27 +335,60 @@ if (!is_array($input)) {
 
     /* DELETE POST */
 
-    if ($action === "delete") {
+    /* ---------------------------------
+   DELETE POST
+---------------------------------- */
 
-        $id = (int) ($input["id"] ?? 0);
+if ($action === "delete") {
 
-        if ($id <= 0) {
-            respond(false, "Invalid item.");
-        }
+    $id = (int) ($input["id"] ?? 0);
 
-        $stmt = $conn->prepare("
-            DELETE FROM dashboard_posts
-            WHERE post_id = ?
-        ");
-
-        $stmt->bind_param("i", $id);
-
-        if ($stmt->execute() && $stmt->affected_rows === 1) {
-            respond(true, "Item deleted successfully.");
-        }
-
-        respond(false, "Item could not be deleted.");
+    if ($id <= 0) {
+        respond(false, "Invalid item.");
     }
+
+    // Get the image filename before deleting the database record
+    $check = $conn->prepare("
+        SELECT post_image
+        FROM dashboard_posts
+        WHERE post_id = ?
+    ");
+
+    $check->bind_param("i", $id);
+    $check->execute();
+
+    $post = $check->get_result()->fetch_assoc();
+
+    if (!$post) {
+        respond(false, "Item not found.");
+    }
+
+    // Delete the database record
+    $stmt = $conn->prepare("
+        DELETE FROM dashboard_posts
+        WHERE post_id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+
+    if ($stmt->execute() && $stmt->affected_rows === 1) {
+
+        // Delete the associated image file
+        if (!empty($post["post_image"])) {
+
+            $imagePath = __DIR__ . "/../images/posts/" .
+                         basename($post["post_image"]);
+
+            if (is_file($imagePath)) {
+                @unlink($imagePath);
+            }
+        }
+
+        respond(true, "Item and associated image deleted successfully.");
+    }
+
+    respond(false, "Item could not be deleted.");
+}
 
 
     /* UPDATE LOGGED-IN OFFICER'S ACCOUNT INFORMATION */

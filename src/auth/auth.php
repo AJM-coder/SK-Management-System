@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "db.php";
+require_once "../../config/db.php";    
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -54,10 +54,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Redirect to dashboard
             if($row['acc_admin']=='YES'){
-                header("Location: admin_dashboard.php");
+                header("Location: ../../admin_dashboard.php");
                 exit();
             } else {
-                header("Location: officer_dashboard.php");
+                header("Location: ../../officer_dashboard.php");
                 exit();
             }
 

@@ -191,7 +191,7 @@ body {
     background: white;
     padding: 22px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    box-shadow: 0 3px 15px rgb(0, 0, 0, 0.582);
 }
 
 .summary-card p {
@@ -218,7 +218,7 @@ body {
     padding: 20px;
     border-radius: 8px;
     border-left: 4px solid #e8a62b;
-    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.582);
 }
 
 .post-card h3 {

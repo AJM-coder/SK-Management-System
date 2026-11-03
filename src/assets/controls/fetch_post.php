@@ -1,5 +1,5 @@
 <?php
-require_once "db.php";
+require_once "config/db.php";
 
 // Fetch all active announcements, events, and projects
 $sql = "
@@ -74,7 +74,7 @@ function displayPosts($posts) {
 
                 <div class="no-image">
                     <span>SK MANAGEMENT</span>
-                    <small>Barangay San Roque</small>
+                    <small>Barangay Salaza</small>
                 </div>
 
             <?php } ?>

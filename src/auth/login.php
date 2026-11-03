@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SK Barangay Salaza | Login</title>
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="../assets/css/login.css">
 </head>
 <body>
 
@@ -15,7 +15,7 @@
 
             <!-- LOGO -->
             <div class="logo-container">
-                <img src="images/SK_LOGO.png" alt="SK Barangay Salaza Logo">
+                <img src="../assets/images/bg/SK_LOGO.png" alt="SK Barangay Salaza Logo">
             </div>
 
             <h2>SK BARANGAY SALAZA</h2>

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SK Management System | Barangay Salaza</title>
 
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="src/assets/css/index.css">
 </head>
 <body>
 
@@ -37,7 +37,7 @@
             <!-- Main Options -->
             <div class="options">
 
-                <a href="login.php" class="option-card officer">
+                <a href="src/auth/login.php" class="option-card officer">
                     <!-- <div class="option-icon"></div> -->
 
                     <h3>SK OFFICER</h3>
