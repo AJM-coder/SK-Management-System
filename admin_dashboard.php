@@ -38,6 +38,7 @@ include "src/assets/controls/acc_query.php";
 
         <title>Account Management | SK System</title>
 
+        <link rel="icon" type="image/png" href="src/assets/images/bg/SK_LOGO.png">
         <link rel="stylesheet" href="src/assets/css/admin_dashboard.css">
 
     </head>

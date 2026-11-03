@@ -27,6 +27,7 @@
 
         <title>Officer Dashboard | SK Management</title>
 
+        <link rel="icon" type="image/png" href="src/assets/images/bg/SK_LOGO.png">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
         <link rel="stylesheet" href="src/assets/css/officer_dashboard.css">
     </head>

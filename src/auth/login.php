@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SK Barangay Salaza | Login</title>
+
+    <link rel="icon" type="image/png" href="../assets/images/bg/SK_LOGO.png">
     <link rel="stylesheet" href="../assets/css/login.css">
 </head>
 <body>

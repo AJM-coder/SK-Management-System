@@ -11,6 +11,7 @@ include "src/assets/controls/fetch_post.php"
 
     <title>SK Announcements | Barangay Salaza</title>
 
+    <link rel="icon" type="image/png" href="src/assets/images/bg/SK_LOGO.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 

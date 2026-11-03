@@ -7,6 +7,7 @@
     <title>SK Management System | Barangay Salaza</title>
 
     <link rel="stylesheet" href="src/assets/css/index.css">
+    <link rel="icon" type="image/png" href="src/assets/images/bg/SK_LOGO.png">
 </head>
 <body>
 
