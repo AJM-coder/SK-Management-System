@@ -428,6 +428,16 @@ $total = $result->num_rows;
 
 <body>
 
+<div class="admin_restriction">
+    <p>
+        Admin page cannot be visible in any mobile phone. To access please use laptop/desktop.
+    </p>
+
+    <a class="return" href="index.php">
+        return
+    </a>
+</div>
+
 <!-- SIDEBAR -->
 
 <div class="sidebar">

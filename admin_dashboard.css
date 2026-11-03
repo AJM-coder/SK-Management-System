@@ -14,6 +14,10 @@ body {
     color: #0e3155;
 }
 
+.admin_restriction{
+    display: none;
+}
+
 /* Sidebar */
 .sidebar {
     width: 240px;
@@ -248,18 +252,28 @@ button:hover {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 180px;
+    .admin_restriction{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-style: italic;
+        padding: 20px 20px;
+        flex-direction: column;
+        gap: 10px;
     }
 
-    .main-content {
-        margin-left: 180px;
-        width: calc(100% - 180px);
-        padding: 20px;
+    .admin_restriction button{
+        background: #fee2e2;
+        color: #991b1b;
     }
 
-    .add-account-form {
-        grid-template-columns: 1fr;
+    .sidebar{
+        display: none;
+    }
+
+    .main-content{
+        display: none;
     }
 }
 
